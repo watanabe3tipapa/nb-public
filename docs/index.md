@@ -1,5 +1,4 @@
 ---
-
 title: nb - Public
 ---
 
@@ -11,7 +10,7 @@ title: nb - Public
 
 ### クイックリンク
 - [ホーム](index.md)
-- [xxx](xxx.md)
+- [使い方](usage.md)
 
 ---
 
