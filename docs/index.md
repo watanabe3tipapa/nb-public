@@ -2,7 +2,7 @@
 title: nb - Public
 ---
 
-# nb - Public
+# nb - Public - INDEX
 
 ## 🚧 **工事中**
 
@@ -11,6 +11,7 @@ title: nb - Public
 ### クイックリンク
 - [ホーム](index.md)
 - [使い方](usage.md)
+- [応用](application.md)
 
 ---
 
@@ -42,6 +43,9 @@ Git同期とリモート管理の詳細については、[nbドキュメント](
 ├── README.md
 └── docs
     └── index.md（このファイル）
+    └── xxx.md（このファイルからのリンク先）
+    └── yyy.md（このファイルからのリンク先）
+    └── zzz.md（このファイルからのリンク先）     
 ```
 
 > docs/内が web となります
