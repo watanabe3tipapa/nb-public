@@ -1,0 +1,60 @@
+name: move-root-md-to-docs
+
+on:
+  push:
+    branches: [ main, master ]
+
+permissions:
+  contents: write
+
+jobs:
+  move:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Move root .md files into docs/
+        id: mover
+        shell: bash
+        run: |
+          shopt -s nullglob
+          mkdir -p docs
+          moved=0
+          for f in *.md; do
+            # README.md はルートに残す想定（必要に応じて外してください）
+            if [ "$f" = "README.md" ]; then
+              continue
+            fi
+            # よくあるメタファイルは除外（必要に応じて調整）
+            if [ "$f" = "LICENSE.md" ] || [ "$f" = "CHANGELOG.md" ]; then
+              continue
+            fi
+            # 既に docs/ にある場合はスキップ
+            if [ -e "docs/$f" ]; then
+              continue
+            fi
+            if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+              git mv "$f" "docs/$f"
+            else
+              mv "$f" "docs/$f"
+            fi
+            moved=1
+          done
+          if [ $moved -eq 1 ]; then
+            echo "moved=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "moved=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push changes
+        if: steps.mover.outputs.moved == '1'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: move root .md files into docs/ [skip ci]"
+          git push
+
