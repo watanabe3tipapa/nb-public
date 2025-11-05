@@ -1,0 +1,27 @@
+graph TD
+    A[nb - Public Repository] --> B{nb Command Line Tool};
+    A --> C{Local Web Application};
+
+    B --> D[Manage Notes];
+    B --> E[Manage Bookmarks];
+    B --> F[Sync with Git Remotes];
+    B --> G[Search & Filter];
+    B --> H[Encrypt Notes];
+    B --> I[Convert with Pandoc];
+
+    C --> J[Browse Notes];
+    C --> K[Access Knowledge Base];
+
+    D --> L[Markdown Files in docs/];
+    E --> L;
+    F --> GitHub[GitHub / Remote Git Repository];
+    G --> L;
+    H --> L;
+    I --> L;
+    J --> L;
+    K --> L;
+    GitHub --> L;
+
+    subgraph docs/ directory
+        L
+    end
