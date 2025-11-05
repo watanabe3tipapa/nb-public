@@ -1,0 +1,78 @@
+name: Render Mermaid to SVG
+
+on:
+  push:
+    paths:
+      - "**/*.mmd"
+      - "**/*.mermaid"
+      - "**/*.md"
+      - "diagrams/**"
+  workflow_dispatch:
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install mermaid-cli
+        run: npm install -g @mermaid-js/mermaid-cli
+
+      - name: Find .mmd/.mermaid files
+        id: find_files
+        run: |
+          git ls-files '*.mmd' '*.mermaid' > mermaid_files_raw.txt || true
+          # Extract mermaid code blocks from .md files
+          rm -f mermaid_from_md.txt
+          for md in $(git ls-files '*.md' || true); do
+            # Sanitize markdown filename to use in temp file names
+            sanitized_name=$(echo "$md" | tr -c 'a-zA-Z0-9' '_')
+            awk -v s_name="$sanitized_name" '
+              BEGIN{in=0;cnt=0}
+              /^```mermaid/{in=1;cnt++;fname=sprintf("md_mermaid_%s_%s.mmd", s_name, cnt);next}
+              /^```/{if(in){in=0}}
+              {if(in){print >> fname}}
+            ' "$md"
+          done
+          # list generated md mermaid files (if any)
+          ls md_mermaid_*.mmd 2>/dev/null || true > mermaid_from_md.txt
+          # combine lists
+          cat mermaid_files_raw.txt > mermaid_files.txt
+          if ls md_mermaid_*.mmd 1>/dev/null 2>&1; then
+            ls md_mermaid_*.mmd >> mermaid_files.txt
+          fi
+          if [ ! -s mermaid_files.txt ]; then
+            echo "no_files=true" >> $GITHUB_OUTPUT
+          else
+            echo "no_files=false" >> $GITHUB_OUTPUT
+            echo "count=$(wc -l < mermaid_files.txt)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Render files to SVG
+        if: steps.find_files.outputs.no_files == 'false'
+        run: |
+          mkdir -p generated-svgs
+          while IFS= read -r file; do
+            [ -f "$file" ] || continue
+            base=$(basename "$file")
+            name="${base%.*}"
+            out="generated-svgs/${name}.svg"
+            echo "Rendering $file -> $out"
+            mmdc -i "$file" -o "$out" -b transparent || { echo "mmdc failed for $file"; exit 1; }
+          done < mermaid_files.txt
+          ls -la generated-svgs || true
+
+      - name: Upload SVGs as workflow artifact
+        if: steps.find_files.outputs.no_files == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mermaid-svgs
+          path: generated-svgs/
