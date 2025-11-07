@@ -17,45 +17,17 @@
 -   **アーカイブ**: 古いノートや使用頻度の低いノートをアーカイブして整理します。
 -   **プラグインと拡張性**: 機能拡張のためのプラグインシステムをサポートし、カスタムスクリプトも利用可能です。
 
+---
 
 ### 概要図
 
-```/dev/null/overview.mermaid#L1-20
-graph TD
-    A[nb - Public Repository] --> B{nb Command Line Tool};
-    A --> C{Local Web Application};
-
-    B --> D[Manage Notes];
-    B --> E[Manage Bookmarks];
-    B --> F[Sync with Git Remotes];
-    B --> G[Search & Filter];
-    B --> H[Encrypt Notes];
-    B --> I[Convert with Pandoc];
-
-    C --> J[Browse Notes];
-    C --> K[Access Knowledge Base];
-
-    D --> L[Markdown Files in docs/];
-    E --> L;
-    F --> GitHub[GitHub / Remote Git Repository];
-    G --> L;
-    H --> L;
-    I --> L;
-    J --> L;
-    K --> L;
-    GitHub --> L;
-
-    subgraph docs/ directory
-        L
-    end
-```
+![IMG](./assets/overview.png)
 
 ---
 
 **このリポジトリをテンプレートとして導入し、自分用に「追記」していくという手法はいかがでしょう**
 
 **（注）パブリック・リポジトリでこのまま使用するとGitHub Pagesによって「公開ノート」となりますのでご留意ください**
-
 
 
 ---
@@ -66,9 +38,7 @@ graph TD
 
 - 使用ツール
 
-  nb
- 
-  [公式サイト]（https://xwmx.github.io/nb/）
+  nb  /  [公式サイト]（https://xwmx.github.io/nb/）
 
 - 貢献
 
@@ -81,6 +51,6 @@ graph TD
 ---
 
 *初回発行: 2025年11月1日*
-*最終更新: 2025年11月5日*
+*最終更新: 2025年11月7日*
 
 ---
