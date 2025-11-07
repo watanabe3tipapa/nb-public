@@ -65,7 +65,8 @@ Git同期とリモート管理の詳細については、[nbドキュメント](
 
 > docs/内が web となります。
 
-> nb-pulic直下に、.md（ファイルを）を保存してください。
+> nb-public直下に.md（ファイル）を保存してください。
+
 > GitHubのリポジトリにプッシュ（`nb sync --remote origin`）するだけでワークフローによってwebが生成されます。 -> 「公開ノート」
 
 > *GitHub Pagesについては、[公式ドキュメント](https://docs.github.com/ja/pages)を参照してください。*
