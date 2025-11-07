@@ -66,7 +66,8 @@ graph TD
 
 - 使用ツール
 
-  nb 
+  nb
+ 
   [公式サイト]（https://xwmx.github.io/nb/）
 
 - 貢献
