@@ -66,17 +66,8 @@ Git同期とリモート管理の詳細については、[nbドキュメント](
 > docs/内が web となります
 > nb-pulic直下に、.md（ファイルを）を保存してください。
 > GitHubのリポジトリにプッシュ（`nb sync --remote origin`）すると、非常に簡単にweb公開できます。
-> *GitHub Pagesについては、[公式ドキュメント]（https://docs.github.com/ja/pages）を参照してください*
+> *GitHub Pagesについては、[公式ドキュメント](https://docs.github.com/ja/pages)を参照してください。*
 
-
-参考：
-
-```mermaid
-graph TD
-    docs[docs/] --> index[index.md]
-    docs --> dotindex[.index]
-    docs --> readme[README.md]
-```
 
 ---
 
