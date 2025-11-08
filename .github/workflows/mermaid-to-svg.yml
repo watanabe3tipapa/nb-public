@@ -70,8 +70,8 @@ jobs:
               continue
             fi
 
-            echo "  - $file -> $output_file"
-            mmdc -i "$file" -o "$output_file" -b transparent || { echo "mmdc failed for $file"; exit 1; }
+             echo "  - $file -> $output_file"
+             mmdc -i "$file" -o "$output_file" -b transparent --puppeteerConfigFile puppeteer-config.json || { echo "mmdc failed for $file"; exit 1; }
           done < mermaid_files.txt
 
           echo "has_changes=true" >> $GITHUB_OUTPUT
