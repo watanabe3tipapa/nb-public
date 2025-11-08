@@ -24,7 +24,8 @@
 
 ### 付加機能（ローカルアプリケーション）
 
--   **画像変換**: Mermaid形式（.mmd |.mermaid ）のSVGへのコンバート。
+-   **マークダウン記法のチェック**: いわゆるLintの実行。
+-   **画像変換**: Mermaid形式（.mmd or .mermaid ）のSVGへのコンバート。
   -> [Mermaid 公式サイト](https://mermaid.js.org/intro/)
 
 
