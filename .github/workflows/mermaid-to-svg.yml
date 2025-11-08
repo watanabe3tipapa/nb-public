@@ -34,12 +34,7 @@ jobs:
           for md in $(git ls-files '*.md' || true); do
             # Sanitize markdown filename to use in temp file names
             sanitized_name=$(echo "$md" | tr -c 'a-zA-Z0-9' '_')
-            awk -v s_name="$sanitized_name" '
-              BEGIN{in=0;cnt=0}
-              /^```mermaid/{in=1;cnt++;fname=sprintf("md_mermaid_%s_%s.mmd", s_name, cnt);next}
-              /^```/{if(in){in=0}}
-              {if(in){print >> fname}}
-            ' "$md"
+            awk -v s_name="$sanitized_name" 'BEGIN{in_block=0; count=0} /^```mermaid/{in_block=1; count++; filename=sprintf("md_mermaid_%s_%s.mmd", s_name, count); next} /^```/{if(in_block){in_block=0}} {if(in_block){print >> filename}}' "$md"
           done
           # list generated md mermaid files (if any)
           ls md_mermaid_*.mmd 2>/dev/null || true > mermaid_from_md.txt
