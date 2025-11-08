@@ -42,7 +42,7 @@ jobs:
               output_file="${file%.mermaid}.svg"
             fi
             echo "  - $file -> $output_file"
-            mmdc -i "$file" -o "$output_file" -b transparent
+            mmdc -i "$file" -o "$output_file" -b transparent --puppeteerConfigFile puppeteer-config.json
           done
 
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
