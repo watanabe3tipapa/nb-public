@@ -11,6 +11,8 @@ on:
 jobs:
   render:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,48 +27,53 @@ jobs:
       - name: Install mermaid-cli
         run: npm install -g @mermaid-js/mermaid-cli
 
-      - name: Find .mmd/.mermaid files
-        id: find_files
+      - name: Find and render Mermaid files
+        id: find_and_render
         run: |
-          git ls-files '*.mmd' '*.mermaid' > mermaid_files_raw.txt || true
-          # Extract mermaid code blocks from .md files
-          rm -f mermaid_from_md.txt
+          # Find native .mmd and .mermaid files
+          git ls-files '*.mmd' '*.mermaid' > mermaid_files.txt || true
+
+          # Find and extract mermaid blocks from .md files
           for md in $(git ls-files '*.md' || true); do
-            # Sanitize markdown filename to use in temp file names
             sanitized_name=$(echo "$md" | tr -c 'a-zA-Z0-9' '_')
             awk -v s_name="$sanitized_name" 'BEGIN{in_block=0; count=0} /^```mermaid/{in_block=1; count++; filename=sprintf("md_mermaid_%s_%s.mmd", s_name, count); next} /^```/{if(in_block){in_block=0}} {if(in_block){print >> filename}}' "$md"
           done
-          # list generated md mermaid files (if any)
-          ls md_mermaid_*.mmd 2>/dev/null || true > mermaid_from_md.txt
-          # combine lists
-          cat mermaid_files_raw.txt > mermaid_files.txt
+
+          # Add extracted files to the list if they exist
           if ls md_mermaid_*.mmd 1>/dev/null 2>&1; then
             ls md_mermaid_*.mmd >> mermaid_files.txt
           fi
+
           if [ ! -s mermaid_files.txt ]; then
-            echo "no_files=true" >> $GITHUB_OUTPUT
-          else
-            echo "no_files=false" >> $GITHUB_OUTPUT
-            echo "count=$(wc -l < mermaid_files.txt)" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No Mermaid files found to render."
+            exit 0
           fi
 
-      - name: Render files to SVG
-        if: steps.find_files.outputs.no_files == 'false'
-        run: |
-          mkdir -p generated-svgs
+          echo "Rendering files..."
           while IFS= read -r file; do
             [ -f "$file" ] || continue
-            # Sanitize the file path to create a unique output name
-            sanitized_name=$(echo "$file" | sed 's/\.\(mmd\|mermaid\)$//' | tr '/' '_')
-            out="generated-svgs/${sanitized_name}.svg"
-            echo "Rendering $file -> $out"
-            mmdc -i "$file" -o "$out" -b transparent || { echo "mmdc failed for $file"; exit 1; }
-          done < mermaid_files.txt
-          ls -la generated-svgs || true
 
-      - name: Upload SVGs as workflow artifact
-        if: steps.find_files.outputs.no_files == 'false'
-        uses: actions/upload-artifact@v4
+            # For extracted markdown blocks, the output name is tricky.
+            # We will place them in an `assets` folder for now.
+            if [[ "$file" == md_mermaid_*.mmd ]]; then
+              # Create a name based on the temp filename. e.g., md_mermaid_docs_usage_md_1.svg
+              output_file="assets/${file%.mmd}.svg"
+              mkdir -p assets
+            else
+              # For native files, place SVG alongside the source file
+              output_file="${file%.*}.svg"
+            fi
+
+            echo "  - $file -> $output_file"
+            mmdc -i "$file" -o "$output_file" -b transparent || { echo "mmdc failed for $file"; exit 1; }
+          done < mermaid_files.txt
+
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and Push SVG files
+        if: steps.find_and_render.outputs.has_changes == 'true'
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          name: mermaid-svgs
-          path: generated-svgs/
+          commit_message: "chore: Render Mermaid files to SVG"
+          file_pattern: "**/*.svg"
