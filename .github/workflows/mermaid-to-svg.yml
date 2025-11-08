@@ -45,7 +45,23 @@ jobs:
             mmdc -i "$file" -o "$output_file" -b transparent --puppeteerConfigFile puppeteer-config.json
           done
 
+<<<<<<< HEAD
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
+=======
+      - name: Render files to SVG
+        if: steps.find_files.outputs.no_files == 'false'
+        run: |
+          mkdir -p generated-svgs
+          while IFS= read -r file; do
+            [ -f "$file" ] || continue
+            # Sanitize the file path to create a unique output name
+            sanitized_name=$(echo "$file" | sed 's/\.\(mmd\|mermaid\)$//' | tr '/' '_')
+            out="generated-svgs/${sanitized_name}.svg"
+            echo "Rendering $file -> $out"
+            mmdc -i "$file" -o "$out" -b transparent || { echo "mmdc failed for $file"; exit 1; }
+          done < mermaid_files.txt
+          ls -la generated-svgs || true
+>>>>>>> a3e688f ([nb] Commit)
 
       - name: Commit and Push SVG files
         if: steps.render.outputs.has_changes == 'true'
