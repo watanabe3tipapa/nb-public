@@ -1,5 +1,10 @@
 # README
 
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Version](https://img.shields.io/badge/version-0.1.1-green.svg)
+
+---
+
 ## リポジトリ概要
 
 このリポジトリは、「nb」というコマンドラインツールとローカルウェブアプリケーションによって管理される公開ノートブックです。Markdown形式のノート、ブックマーク、アーカイブ、知識ベースを一元的に管理し、GitHubなどのリモートリポジトリと同期することで、複数のデバイス間での共有・同期を容易にします。
@@ -38,7 +43,7 @@
 
 - 使用ツール
 
-  nb  /  [公式サイト]（https://xwmx.github.io/nb/）
+  nb  /  [公式サイト](https://xwmx.github.io/nb/)
 
 - 貢献
 
@@ -51,6 +56,6 @@
 ---
 
 *初回発行: 2025年11月1日*
-*最終更新: 2025年11月7日*
+*最終更新: 2025年11月8日*
 
 ---
