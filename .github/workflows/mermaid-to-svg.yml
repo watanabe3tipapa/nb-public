@@ -5,14 +5,17 @@ on:
     paths:
       - "**/*.mmd"
       - "**/*.mermaid"
+      - "**/*.md"
   workflow_dispatch:
 
 jobs:
-  render-and-commit:
+  render:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -22,32 +25,36 @@ jobs:
       - name: Install mermaid-cli
         run: npm install -g @mermaid-js/mermaid-cli
 
-      - name: Find and Render Mermaid files
-        id: render
+      - name: Find .mmd/.mermaid files
+        id: find_files
         run: |
-          #!/bin/bash
-          # Find all .mmd and .mermaid files tracked by git
-          mapfile -t files < <(git ls-files '**/*.mmd' '**/*.mermaid')
-
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No Mermaid files found to render."
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
-            exit 0
+          git ls-files '*.mmd' '*.mermaid' > mermaid_files_raw.txt || true
+          # Extract mermaid code blocks from .md files
+          rm -f mermaid_from_md.txt
+          for md in $(git ls-files '*.md' || true); do
+            # Sanitize markdown filename to use in temp file names
+            sanitized_name=$(echo "$md" | tr -c 'a-zA-Z0-9' '_')
+            awk -v s_name="$sanitized_name" '
+              BEGIN{in=0;cnt=0}
+              /^```mermaid/{in=1;cnt++;fname=sprintf("md_mermaid_%s_%s.mmd", s_name, cnt);next}
+              /^```/{if(in){in=0}}
+              {if(in){print >> fname}}
+            ' "$md"
+          done
+          # list generated md mermaid files (if any)
+          ls md_mermaid_*.mmd 2>/dev/null || true > mermaid_from_md.txt
+          # combine lists
+          cat mermaid_files_raw.txt > mermaid_files.txt
+          if ls md_mermaid_*.mmd 1>/dev/null 2>&1; then
+            ls md_mermaid_*.mmd >> mermaid_files.txt
+          fi
+          if [ ! -s mermaid_files.txt ]; then
+            echo "no_files=true" >> $GITHUB_OUTPUT
+          else
+            echo "no_files=false" >> $GITHUB_OUTPUT
+            echo "count=$(wc -l < mermaid_files.txt)" >> $GITHUB_OUTPUT
           fi
 
-          echo "Rendering ${#files[@]} file(s):"
-          for file in "${files[@]}"; do
-            output_file="${file%.*}.svg"
-            if [[ "$file" == *.mermaid ]]; then
-              output_file="${file%.mermaid}.svg"
-            fi
-            echo "  - $file -> $output_file"
-            mmdc -i "$file" -o "$output_file" -b transparent --puppeteerConfigFile puppeteer-config.json
-          done
-
-<<<<<<< HEAD
-          echo "has_changes=true" >> "$GITHUB_OUTPUT"
-=======
       - name: Render files to SVG
         if: steps.find_files.outputs.no_files == 'false'
         run: |
@@ -61,11 +68,10 @@ jobs:
             mmdc -i "$file" -o "$out" -b transparent || { echo "mmdc failed for $file"; exit 1; }
           done < mermaid_files.txt
           ls -la generated-svgs || true
->>>>>>> a3e688f ([nb] Commit)
 
-      - name: Commit and Push SVG files
-        if: steps.render.outputs.has_changes == 'true'
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Upload SVGs as workflow artifact
+        if: steps.find_files.outputs.no_files == 'false'
+        uses: actions/upload-artifact@v4
         with:
-          commit_message: "chore: Render Mermaid files to SVG"
-          file_pattern: "**/*.svg"
+          name: mermaid-svgs
+          path: generated-svgs/
