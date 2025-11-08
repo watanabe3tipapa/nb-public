@@ -2,7 +2,7 @@
 title: nb - Public - assist
 ---
 
-# nb関連の備忘録＆チートシート
+## nb関連の備忘録＆チートシート
 
 ## Markdown チートシート
 
