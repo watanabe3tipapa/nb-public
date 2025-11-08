@@ -54,15 +54,20 @@ jobs:
           while IFS= read -r file; do
             [ -f "$file" ] || continue
 
-            # For extracted markdown blocks, the output name is tricky.
-            # We will place them in an `assets` folder for now.
             if [[ "$file" == md_mermaid_*.mmd ]]; then
-              # Create a name based on the temp filename. e.g., md_mermaid_docs_usage_md_1.svg
+              # Handle extracted markdown blocks
               output_file="assets/${file%.mmd}.svg"
               mkdir -p assets
+            elif [[ "$file" == *.mermaid ]]; then
+              # Handle native .mermaid files
+              output_file="${file%.mermaid}.svg"
+            elif [[ "$file" == *.mmd ]]; then
+              # Handle native .mmd files
+              output_file="${file%.mmd}.svg"
             else
-              # For native files, place SVG alongside the source file
-              output_file="${file%.*}.svg"
+              # Skip if no known extension matches
+              echo "Skipping unknown file type: $file"
+              continue
             fi
 
             echo "  - $file -> $output_file"
