@@ -187,6 +187,7 @@ Markdownの記法として解釈される文字をそのまま表示したい場
 ## 1. 初期設定とリポジトリ作成
 
 ### `git config`
+
 Gitの基本設定を行います。
 
 ```bash
@@ -201,6 +202,7 @@ git config --list
 ```
 
 ### `git init`
+
 カレントディレクトリに新しいGitリポジトリを作成します。
 
 ```bash
@@ -208,6 +210,7 @@ git init
 ```
 
 ### `git clone`
+
 リモートリポジトリのクローン（コピー）をローカルに作成します。
 
 ```bash
@@ -219,6 +222,7 @@ git clone <repository_url>
 ## 2. 変更の記録
 
 ### `git status`
+
 リポジトリの状態（変更されたファイル、ステージングエリアの状態など）を表示します。
 
 ```bash
@@ -226,6 +230,7 @@ git status
 ```
 
 ### `git add`
+
 変更されたファイルをステージングエリアに追加し、次のコミットに含める準備をします。
 
 ```bash
@@ -237,6 +242,7 @@ git add .
 ```
 
 ### `git commit`
+
 ステージングエリアにある変更をローカルリポジトリに記録（コミット）します。
 
 ```bash
@@ -248,6 +254,7 @@ git commit -am "Your commit message"
 ```
 
 ### `git diff`
+
 作業ディレクトリとステージングエリア、またはコミット間の差分を表示します。
 
 ```bash
@@ -266,6 +273,7 @@ git diff <commit1> <commit2>
 ## 3. ブランチ操作
 
 ### `git branch`
+
 ブランチの一覧表示、作成、削除を行います。
 
 ```bash
@@ -283,6 +291,7 @@ git branch -d <branch_name>
 ```
 
 ### `git checkout`
+
 ブランチを切り替えます。
 
 ```bash
@@ -290,6 +299,7 @@ git checkout <branch_name>
 ```
 
 ### `git switch` (推奨)
+
 ブランチを切り替えます (`checkout`より安全)。
 
 ```bash
@@ -300,6 +310,7 @@ git switch -c <new_branch_name>
 ```
 
 ### `git merge`
+
 指定したブランチの変更を現在のブランチに取り込みます。
 
 ```bash
@@ -308,6 +319,7 @@ git merge feature
 ```
 
 ### `git rebase`
+
 現在のブランチのベースとなるコミットを、指定したブランチの最新コミットに変更します。コミット履歴が直線的になります。
 
 ```bash
@@ -320,6 +332,7 @@ git rebase master
 ## 4. リモートリポジトリとの連携
 
 ### `git remote`
+
 リモートリポジトリの管理を行います。
 
 ```bash
@@ -331,6 +344,7 @@ git remote add <name> <url>
 ```
 
 ### `git push`
+
 ローカルリポジトリのコミットをリモートリポジトリにアップロードします。
 
 ```bash
@@ -341,6 +355,7 @@ git push origin master
 ```
 
 ### `git pull`
+
 リモートリポジトリの最新の変更を取得し、現在のブランチにマージします。(`fetch` + `merge`)
 
 ```bash
@@ -348,6 +363,7 @@ git pull <remote_name> <branch_name>
 ```
 
 ### `git fetch`
+
 リモートリポジトリの最新の変更を取得しますが、マージは行いません。
 
 ```bash
@@ -359,6 +375,7 @@ git fetch <remote_name>
 ## 5. 履歴の確認と修正
 
 ### `git log`
+
 コミット履歴を表示します。
 
 ```bash
@@ -373,6 +390,7 @@ git log --graph --oneline --decorate --all
 ```
 
 ### `git reset`
+
 コミットを取り消したり、ステージングエリアの状態を変更したりします。
 
 ```bash
@@ -387,6 +405,7 @@ git reset --hard <commit_hash>
 ```
 
 ### `git revert`
+
 指定したコミットの変更を打ち消す新しいコミットを作成します。履歴を書き換えないため、共有リポジトリで安全に使えます。
 
 ```bash
@@ -394,6 +413,7 @@ git revert <commit_hash>
 ```
 
 ### `git stash`
+
 まだコミットしたくない変更を一時的に退避させます。
 
 ```bash
