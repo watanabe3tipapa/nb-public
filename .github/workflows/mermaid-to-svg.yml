@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,51 +31,108 @@ jobs:
       - name: Find and render Mermaid files
         id: find_and_render
         run: |
-          # Find native .mmd and .mermaid files
+          set -euo pipefail
+
+          # Collect native mermaid files
           git ls-files '*.mmd' '*.mermaid' > mermaid_files.txt || true
 
-          # Find and extract mermaid blocks from .md files
-          for md in $(git ls-files '*.md' || true); do
+          # Extract mermaid fenced blocks from markdown files safely (handles spaces/newlines in filenames)
+          git ls-files '*.md' | while IFS= read -r md; do
             sanitized_name=$(echo "$md" | tr -c 'a-zA-Z0-9' '_')
-            awk -v s_name="$sanitized_name" 'BEGIN{in_block=0; count=0} /^```mermaid/{in_block=1; count++; filename=sprintf("md_mermaid_%s_%s.mmd", s_name, count); next} /^```/{if(in_block){in_block=0}} {if(in_block){print >> filename}}' "$md"
+            awk -v s_name="$sanitized_name" '
+              BEGIN { in_block=0; count=0 }
+              /^```mermaid[[:space:]]*$/ {
+                in_block=1
+                count++
+                filename = sprintf("md_mermaid_%s_%d.mmd", s_name, count)
+                next
+              }
+              /^```[[:space:]]*$/ {
+                if (in_block) { in_block=0; close(filename) }
+                next
+              }
+              {
+                if (in_block) { print >> filename }
+              }
+            ' "$md"
           done
 
-          # Add extracted files to the list if they exist
+          # Add extracted files to list
           if ls md_mermaid_*.mmd 1>/dev/null 2>&1; then
             ls md_mermaid_*.mmd >> mermaid_files.txt
           fi
 
           if [ ! -s mermaid_files.txt ]; then
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
             echo "No Mermaid files found to render."
             exit 0
           fi
 
-          echo "Rendering files..."
-          while IFS= read -r file; do
+          # Determine puppeteer config option if present
+          PUPP_OPTS=""
+          if [ -f puppeteer-config.json ]; then
+            PUPP_OPTS="--puppeteerConfigFile puppeteer-config.json"
+          fi
+
+          mkdir -p assets
+
+          render_failed=0
+          while IFS= read -r file || [ -n "$file" ]; do
             [ -f "$file" ] || continue
 
-            if [[ "$file" == md_mermaid_*.mmd ]]; then
-              # Handle extracted markdown blocks
-              output_file="assets/${file%.mmd}.svg"
-              mkdir -p assets
-            elif [[ "$file" == *.mermaid ]]; then
-              # Handle native .mermaid files
-              output_file="${file%.mermaid}.svg"
-            elif [[ "$file" == *.mmd ]]; then
-              # Handle native .mmd files
-              output_file="${file%.mmd}.svg"
-            else
-              # Skip if no known extension matches
-              echo "Skipping unknown file type: $file"
+            case "$file" in
+              md_mermaid_*.mmd)
+                output_file="assets/${file%.mmd}.svg"
+                ;;
+              *.mermaid)
+                output_file="${file%.mermaid}.svg"
+                ;;
+              *.mmd)
+                output_file="${file%.mmd}.svg"
+                ;;
+              *)
+                echo "Skipping unknown file type: $file"
+                continue
+                ;;
+            esac
+
+            echo "Rendering: $file -> $output_file"
+            mkdir -p "$(dirname "$output_file")"
+
+            # Render to temporary file then compare to avoid unnecessary commits
+            tmp_out="$(mktemp --suffix=.svg)"
+            if ! mmdc -i "$file" -o "$tmp_out" -b transparent $PUPP_OPTS; then
+              echo "mmdc failed for $file"
+              render_failed=1
+              rm -f "$tmp_out"
               continue
             fi
 
-             echo "  - $file -> $output_file"
-             mmdc -i "$file" -o "$output_file" -b transparent --puppeteerConfigFile puppeteer-config.json || { echo "mmdc failed for $file"; exit 1; }
+            if [ -f "$output_file" ]; then
+              if ! diff -q "$tmp_out" "$output_file" >/dev/null 2>&1; then
+                mv "$tmp_out" "$output_file"
+                echo "Updated: $output_file"
+              else
+                rm -f "$tmp_out"
+                echo "No change: $output_file"
+              fi
+            else
+              mv "$tmp_out" "$output_file"
+              echo "Created: $output_file"
+            fi
           done < mermaid_files.txt
 
-          echo "has_changes=true" >> $GITHUB_OUTPUT
+          if [ "$render_failed" -ne 0 ]; then
+            echo "Some renders failed."
+            exit 1
+          fi
+
+          # Check if there are changes to commit
+          if git status --porcelain --untracked-files=no | grep -qE '\.svg$'; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Commit and Push SVG files
         if: steps.find_and_render.outputs.has_changes == 'true'
